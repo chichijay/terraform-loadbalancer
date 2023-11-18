@@ -1,16 +1,17 @@
 # configured aws provider with proper credentials
 provider "aws" {
-  region    = var.region
-  profile   = "default" 
+  region  = var.region
+  profile = "default"
 }
 
 # create a vpc
 resource "aws_vpc" "this" {
-  cidr_block = "10.20.20.0/26"
-  enable_dns_support = true
+  cidr_block           = "10.20.20.0/26"
+  enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
     "Name" = "Application-lb"
+
   }
 }
 
@@ -62,10 +63,10 @@ resource "aws_security_group" "web-server" {
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    description = "traffic from alb"
-    from_port   = "80"
-    to_port     = "80"
-    protocol    = "tcp"
+    description     = "traffic from alb"
+    from_port       = "80"
+    to_port         = "80"
+    protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
 
   }
@@ -84,7 +85,7 @@ resource "aws_security_group" "web-server" {
 data "aws_ami" "amazon_linux_2" {
   most_recent = true
   owners      = ["amazon"]
-  
+
   filter {
     name   = "owner-alias"
     values = ["amazon"]
@@ -98,15 +99,15 @@ data "aws_ami" "amazon_linux_2" {
 
 # launch 2 EC2 instances and install apache 
 resource "aws_instance" "web-server" {
-  count                  = length(var.subnet_cidr_private)
-  instance_type          = "t2.micro"
-  ami                    = data.aws_ami.amazon_linux_2.id
-  vpc_security_group_ids = [aws_security_group.web-server.id]
-  subnet_id              = element(aws_subnet.private.*.id, count.index)
-  user_data              = file("install_httpd.sh")
+  count                       = length(var.subnet_cidr_private)
+  instance_type               = "t2.micro"
+  ami                         = data.aws_ami.amazon_linux_2.id
+  vpc_security_group_ids      = [aws_security_group.web-server.id]
+  subnet_id                   = element(aws_subnet.private.*.id, count.index)
+  user_data                   = file("install_httpd.sh")
   associate_public_ip_address = true
   tags = {
     Name = "web-server-${count.index + 1}"
   }
-  
+
 }
